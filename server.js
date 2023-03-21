@@ -9,9 +9,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+var conn
+const dbConnection = async ()=>{
+  conn = await db.getConnection()
+}
+
+dbConnection()
+
 app.post("/admin-login", async (req, res) => {
   try {
-    let conn = await db.getConnection();
     let data = await conn.query("SELECT * FROM admin WHERE ID = 1");
 
     if (req.body.username === data[0].username) {
@@ -33,7 +39,7 @@ app.post("/admin-login", async (req, res) => {
 
 app.post("/upload", async (req, res) => {
   try {
-    let conn = await db.getConnection();
+    // let conn = await db.getConnection();
     console.log(req.body);
     const { productName, productCategory, productDownloadLink } = req.body;
 
@@ -58,7 +64,7 @@ app.post("/upload", async (req, res) => {
 });
 
 app.get("/download", async (req, res) => {
-  let conn = await db.getConnection();
+  // let conn = await db.getConnection();
 
   const download = await conn.query("SELECT * FROM products");
   res.send(download);
@@ -66,19 +72,19 @@ app.get("/download", async (req, res) => {
 
 app.post("/edit", async (req, res) => {
   try {
+    console.log(req.body);
     let conn = await db.getConnection();
 
-    const oldRecord = req.body.oldRecord;
-    const newRecord = req.body.newRecord;
+    const Record = req.body;
 
-    let query = `UPDATE products SET productDownloadLink='${newRecord.productDownloadLink}', productCategory='${newRecord.productCategory}' WHERE productName='${oldRecord.productName}'`;
+    let query = `UPDATE products SET productName='${Record.newName}', productDownloadLink='${Record.newLink}', productCategory='${Record.newCategory}' WHERE productName='${Record.oldName}'`;
 
     conn.query(query, (err) => {
-      console.log(err);
-      return;
+      if (err) {
+        return res.send({ status: "error in database" });
+      }
     });
-
-    return res.send("success");
+    return res.send({ status: "ok" });
   } catch (err) {
     return res.send(err);
   }
